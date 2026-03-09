@@ -21,7 +21,10 @@ class _POSScannerScreenState extends State<POSScannerScreen> {
   final List<CartItem> _cart = [];
   bool _isLoading = true;
   bool _showSuccessFlash = false;
-  final MobileScannerController _controller = MobileScannerController();
+  final MobileScannerController _controller = MobileScannerController(
+    facing: CameraFacing.back,
+    formats: [BarcodeFormat.all],
+  );
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
