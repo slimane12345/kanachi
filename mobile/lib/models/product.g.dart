@@ -17,48 +17,53 @@ const ProductSchema = CollectionSchema(
   name: r'Product',
   id: -6222113721139403729,
   properties: {
-    r'category': PropertySchema(
+    r'barcode': PropertySchema(
       id: 0,
+      name: r'barcode',
+      type: IsarType.string,
+    ),
+    r'category': PropertySchema(
+      id: 1,
       name: r'category',
       type: IsarType.string,
     ),
     r'isDirty': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'isDirty',
       type: IsarType.bool,
     ),
     r'lastSyncedAt': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'lastSyncedAt',
       type: IsarType.dateTime,
     ),
     r'minThreshold': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'minThreshold',
       type: IsarType.long,
     ),
     r'name': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'name',
       type: IsarType.string,
     ),
     r'price': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'price',
       type: IsarType.double,
     ),
     r'remoteId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'remoteId',
       type: IsarType.string,
     ),
     r'stock': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'stock',
       type: IsarType.long,
     ),
     r'updatedAt': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -81,6 +86,19 @@ const ProductSchema = CollectionSchema(
           caseSensitive: true,
         )
       ],
+    ),
+    r'barcode': IndexSchema(
+      id: 1156800733621869998,
+      name: r'barcode',
+      unique: true,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'barcode',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
     )
   },
   links: {},
@@ -98,6 +116,12 @@ int _productEstimateSize(
 ) {
   var bytesCount = offsets.last;
   {
+    final value = object.barcode;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.category;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -114,15 +138,16 @@ void _productSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.category);
-  writer.writeBool(offsets[1], object.isDirty);
-  writer.writeDateTime(offsets[2], object.lastSyncedAt);
-  writer.writeLong(offsets[3], object.minThreshold);
-  writer.writeString(offsets[4], object.name);
-  writer.writeDouble(offsets[5], object.price);
-  writer.writeString(offsets[6], object.remoteId);
-  writer.writeLong(offsets[7], object.stock);
-  writer.writeDateTime(offsets[8], object.updatedAt);
+  writer.writeString(offsets[0], object.barcode);
+  writer.writeString(offsets[1], object.category);
+  writer.writeBool(offsets[2], object.isDirty);
+  writer.writeDateTime(offsets[3], object.lastSyncedAt);
+  writer.writeLong(offsets[4], object.minThreshold);
+  writer.writeString(offsets[5], object.name);
+  writer.writeDouble(offsets[6], object.price);
+  writer.writeString(offsets[7], object.remoteId);
+  writer.writeLong(offsets[8], object.stock);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 Product _productDeserialize(
@@ -132,16 +157,17 @@ Product _productDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Product();
-  object.category = reader.readStringOrNull(offsets[0]);
+  object.barcode = reader.readStringOrNull(offsets[0]);
+  object.category = reader.readStringOrNull(offsets[1]);
   object.id = id;
-  object.isDirty = reader.readBool(offsets[1]);
-  object.lastSyncedAt = reader.readDateTimeOrNull(offsets[2]);
-  object.minThreshold = reader.readLong(offsets[3]);
-  object.name = reader.readString(offsets[4]);
-  object.price = reader.readDouble(offsets[5]);
-  object.remoteId = reader.readString(offsets[6]);
-  object.stock = reader.readLong(offsets[7]);
-  object.updatedAt = reader.readDateTime(offsets[8]);
+  object.isDirty = reader.readBool(offsets[2]);
+  object.lastSyncedAt = reader.readDateTimeOrNull(offsets[3]);
+  object.minThreshold = reader.readLong(offsets[4]);
+  object.name = reader.readString(offsets[5]);
+  object.price = reader.readDouble(offsets[6]);
+  object.remoteId = reader.readString(offsets[7]);
+  object.stock = reader.readLong(offsets[8]);
+  object.updatedAt = reader.readDateTime(offsets[9]);
   return object;
 }
 
@@ -155,20 +181,22 @@ P _productDeserializeProp<P>(
     case 0:
       return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
-    case 5:
-      return (reader.readDouble(offset)) as P;
-    case 6:
-      return (reader.readString(offset)) as P;
-    case 7:
       return (reader.readLong(offset)) as P;
+    case 5:
+      return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readDouble(offset)) as P;
+    case 7:
+      return (reader.readString(offset)) as P;
     case 8:
+      return (reader.readLong(offset)) as P;
+    case 9:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -239,6 +267,58 @@ extension ProductByIndex on IsarCollection<Product> {
   List<Id> putAllByRemoteIdSync(List<Product> objects,
       {bool saveLinks = true}) {
     return putAllByIndexSync(r'remoteId', objects, saveLinks: saveLinks);
+  }
+
+  Future<Product?> getByBarcode(String? barcode) {
+    return getByIndex(r'barcode', [barcode]);
+  }
+
+  Product? getByBarcodeSync(String? barcode) {
+    return getByIndexSync(r'barcode', [barcode]);
+  }
+
+  Future<bool> deleteByBarcode(String? barcode) {
+    return deleteByIndex(r'barcode', [barcode]);
+  }
+
+  bool deleteByBarcodeSync(String? barcode) {
+    return deleteByIndexSync(r'barcode', [barcode]);
+  }
+
+  Future<List<Product?>> getAllByBarcode(List<String?> barcodeValues) {
+    final values = barcodeValues.map((e) => [e]).toList();
+    return getAllByIndex(r'barcode', values);
+  }
+
+  List<Product?> getAllByBarcodeSync(List<String?> barcodeValues) {
+    final values = barcodeValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'barcode', values);
+  }
+
+  Future<int> deleteAllByBarcode(List<String?> barcodeValues) {
+    final values = barcodeValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'barcode', values);
+  }
+
+  int deleteAllByBarcodeSync(List<String?> barcodeValues) {
+    final values = barcodeValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'barcode', values);
+  }
+
+  Future<Id> putByBarcode(Product object) {
+    return putByIndex(r'barcode', object);
+  }
+
+  Id putByBarcodeSync(Product object, {bool saveLinks = true}) {
+    return putByIndexSync(r'barcode', object, saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllByBarcode(List<Product> objects) {
+    return putAllByIndex(r'barcode', objects);
+  }
+
+  List<Id> putAllByBarcodeSync(List<Product> objects, {bool saveLinks = true}) {
+    return putAllByIndexSync(r'barcode', objects, saveLinks: saveLinks);
   }
 }
 
@@ -360,10 +440,221 @@ extension ProductQueryWhere on QueryBuilder<Product, Product, QWhereClause> {
       }
     });
   }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> barcodeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'barcode',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> barcodeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'barcode',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> barcodeEqualTo(
+      String? barcode) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'barcode',
+        value: [barcode],
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterWhereClause> barcodeNotEqualTo(
+      String? barcode) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'barcode',
+              lower: [],
+              upper: [barcode],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'barcode',
+              lower: [barcode],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'barcode',
+              lower: [barcode],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'barcode',
+              lower: [],
+              upper: [barcode],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
 }
 
 extension ProductQueryFilter
     on QueryBuilder<Product, Product, QFilterCondition> {
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'barcode',
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'barcode',
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'barcode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'barcode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'barcode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'barcode',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'barcode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'barcode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'barcode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'barcode',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'barcode',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterFilterCondition> barcodeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'barcode',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterFilterCondition> categoryIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1131,6 +1422,18 @@ extension ProductQueryLinks
     on QueryBuilder<Product, Product, QFilterCondition> {}
 
 extension ProductQuerySortBy on QueryBuilder<Product, Product, QSortBy> {
+  QueryBuilder<Product, Product, QAfterSortBy> sortByBarcode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'barcode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> sortByBarcodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'barcode', Sort.desc);
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterSortBy> sortByCategory() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'category', Sort.asc);
@@ -1242,6 +1545,18 @@ extension ProductQuerySortBy on QueryBuilder<Product, Product, QSortBy> {
 
 extension ProductQuerySortThenBy
     on QueryBuilder<Product, Product, QSortThenBy> {
+  QueryBuilder<Product, Product, QAfterSortBy> thenByBarcode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'barcode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Product, Product, QAfterSortBy> thenByBarcodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'barcode', Sort.desc);
+    });
+  }
+
   QueryBuilder<Product, Product, QAfterSortBy> thenByCategory() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'category', Sort.asc);
@@ -1365,6 +1680,13 @@ extension ProductQuerySortThenBy
 
 extension ProductQueryWhereDistinct
     on QueryBuilder<Product, Product, QDistinct> {
+  QueryBuilder<Product, Product, QDistinct> distinctByBarcode(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'barcode', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Product, Product, QDistinct> distinctByCategory(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1428,6 +1750,12 @@ extension ProductQueryProperty
   QueryBuilder<Product, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Product, String?, QQueryOperations> barcodeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'barcode');
     });
   }
 

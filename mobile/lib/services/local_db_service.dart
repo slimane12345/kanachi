@@ -63,4 +63,28 @@ class LocalDbService {
       await isar.writeTxn(() => isar.debtTransactions.put(item));
     }
   }
+
+  // Preload Products for fast lookup
+  Future<Map<String, Product>> getBarcodeMap() async {
+    final products = await isar.products.where().findAll();
+    return {
+      for (var p in products)
+        if (p.barcode != null) p.barcode!: p
+    };
+  }
+
+  Future<void> bulkSaveProducts(List<Product> products) async {
+    await isar.writeTxn(() async {
+      final now = DateTime.now();
+      for (var p in products) {
+        p.updatedAt = now;
+        p.isDirty = true;
+      }
+      await isar.products.putAll(products);
+    });
+  }
+
+  Future<List<Product>> getAllProducts() async {
+    return await isar.products.where().findAll();
+  }
 }

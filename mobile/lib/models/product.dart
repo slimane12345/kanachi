@@ -10,6 +10,9 @@ class Product with SyncMetadata {
   @Index(unique: true, replace: true)
   late String remoteId;
 
+  @Index(unique: true)
+  String? barcode;
+
   late String name;
   late double price;
   late int stock;
