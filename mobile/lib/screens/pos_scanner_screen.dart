@@ -205,9 +205,36 @@ class _POSScannerScreenState extends State<POSScannerScreen> {
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: MobileScanner(
-                      controller: _controller,
-                      onDetect: _onDetect,
+                     child: MobileScanner(
+                    controller: _controller,
+                    onDetect: _onDetect,
+                    errorBuilder: (context, error, child) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.camera_alt_outlined, color: Colors.red, size: 48),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Camera Error: ${error.errorCode}",
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  ),
+                  // Switch Camera Button
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: CircleAvatar(
+                      backgroundColor: Colors.black.withOpacity(0.5),
+                      child: IconButton(
+                        icon: const Icon(Icons.flip_camera_ios, color: Colors.white),
+                        onPressed: () => _controller.switchCamera(),
+                      ),
                     ),
                   ),
                   // Animated Flash Indicator
