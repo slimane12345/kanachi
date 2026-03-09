@@ -1,28 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  Timestamp 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  doc,
+  Timestamp
 } from 'firebase/firestore';
 import { Product } from '../types';
-import { 
-  XCircle, 
-  Package, 
-  Plus, 
-  Check, 
-  Smartphone, 
+import {
+  XCircle,
+  Package,
+  Plus,
+  Check,
+  Smartphone,
   ArrowLeft,
   Search,
-  AlertCircle
+  AlertCircle,
+  ScanLine
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button, Card, Input } from '../App'; // Assuming these are exported or I'll need to redefine them
+
+import BarcodeScanner from './BarcodeScanner';
 
 interface SmartInventoryScanProps {
   user: any;
@@ -40,25 +43,24 @@ interface ScannedItem {
 }
 
 export default function SmartInventoryScan({ user, onFinish, products }: SmartInventoryScanProps) {
-  const [isScanning, setIsScanning] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const [showNewProductForm, setShowNewProductForm] = useState<string | null>(null);
   const [newProductData, setNewProductData] = useState({ name: '', price: '', costPrice: '', lowStockThreshold: '5' });
   const [saving, setSaving] = useState(false);
 
-  // Simulated continuous scan logic
-  // In a real app, this would be connected to a barcode scanner library
-  const simulateScan = (barcode: string) => {
-    handleBarcodeScanned(barcode);
-  };
-
   const handleBarcodeScanned = (barcode: string) => {
+    // Basic debounce - don't scan same thing twice in 2 seconds unless quantity is being added
+    if (lastScanned === barcode) {
+      // Optional: could add a delay here, but usually users want to scan multiple items of same type
+    }
+
     setLastScanned(barcode);
-    
+
     setScannedItems(prev => {
       const existingIndex = prev.findIndex(item => item.barcode === barcode);
-      
+
       if (existingIndex !== -1) {
         const newItems = [...prev];
         newItems[existingIndex].quantity += 1;
@@ -69,6 +71,7 @@ export default function SmartInventoryScan({ user, onFinish, products }: SmartIn
           return [...prev, { barcode, product: existingProduct, quantity: 1, isNew: false }];
         } else {
           setShowNewProductForm(barcode);
+          setIsScanning(false); // Stop scanning to fill form
           return [...prev, { barcode, quantity: 1, isNew: true }];
         }
       }
@@ -79,9 +82,9 @@ export default function SmartInventoryScan({ user, onFinish, products }: SmartIn
     e.preventDefault();
     if (!showNewProductForm) return;
 
-    setScannedItems(prev => prev.map(item => 
-      item.barcode === showNewProductForm 
-        ? { ...item, tempName: newProductData.name, tempPrice: newProductData.price } 
+    setScannedItems(prev => prev.map(item =>
+      item.barcode === showNewProductForm
+        ? { ...item, tempName: newProductData.name, tempPrice: newProductData.price }
         : item
     ));
 
@@ -130,7 +133,7 @@ export default function SmartInventoryScan({ user, onFinish, products }: SmartIn
           </button>
           <h2 className="text-xl font-black">جرد السلعة (Scan)</h2>
         </div>
-        <button 
+        <button
           onClick={handleFinish}
           disabled={scannedItems.length === 0 || saving}
           className="bg-white text-emerald-600 px-6 py-2 rounded-xl font-black disabled:opacity-50"
@@ -139,35 +142,24 @@ export default function SmartInventoryScan({ user, onFinish, products }: SmartIn
         </button>
       </div>
 
-      {/* Scanner View (Simulated) */}
-      <div className="relative h-64 bg-slate-900 flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 opacity-30">
-          <div className="w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/20 via-transparent to-transparent"></div>
-        </div>
-        
-        <div className="relative z-10 text-center space-y-4">
-          <div className="w-48 h-32 border-2 border-emerald-500/50 rounded-2xl flex items-center justify-center relative">
-            <div className="absolute inset-x-0 h-0.5 bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-scan-line"></div>
-            <Smartphone className="w-12 h-12 text-emerald-500/50" />
+      {/* Scanner View */}
+      <div className="relative h-48 bg-slate-900 flex items-center justify-center overflow-hidden">
+        {isScanning ? (
+          <BarcodeScanner
+            onScan={(code) => handleBarcodeScanned(code)}
+            onClose={() => setIsScanning(false)}
+          />
+        ) : (
+          <div className="text-center space-y-4">
+            <button
+              onClick={() => setIsScanning(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white p-6 rounded-full shadow-lg active:scale-95 transition-all"
+            >
+              <ScanLine className="w-8 h-8" />
+            </button>
+            <p className="text-emerald-400 font-bold text-sm uppercase tracking-widest">إضغط لبدء المسح</p>
           </div>
-          <p className="text-emerald-400 font-bold text-sm animate-pulse">وجه الكاميرا للباركود...</p>
-        </div>
-
-        {/* Simulated Scan Buttons for Demo */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 px-4">
-          <button 
-            onClick={() => simulateScan('6111234567890')} 
-            className="bg-white/10 hover:bg-white/20 text-white text-[10px] px-3 py-1 rounded-full border border-white/20"
-          >
-            Scan Coca (Existing)
-          </button>
-          <button 
-            onClick={() => simulateScan('new-' + Math.random().toString(36).substring(7))} 
-            className="bg-white/10 hover:bg-white/20 text-white text-[10px] px-3 py-1 rounded-full border border-white/20"
-          >
-            Scan New Item
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Scanned List */}
@@ -184,7 +176,7 @@ export default function SmartInventoryScan({ user, onFinish, products }: SmartIn
         <div className="space-y-3">
           <AnimatePresence initial={false}>
             {scannedItems.map((item, index) => (
-              <motion.div 
+              <motion.div
                 key={item.barcode}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -208,7 +200,7 @@ export default function SmartInventoryScan({ user, onFinish, products }: SmartIn
                   <div className="text-right">
                     <div className="text-2xl font-black text-emerald-900">x{item.quantity}</div>
                     {item.isNew && !item.tempName && (
-                      <button 
+                      <button
                         onClick={() => setShowNewProductForm(item.barcode)}
                         className="text-[10px] text-amber-600 font-bold underline"
                       >
@@ -233,7 +225,7 @@ export default function SmartInventoryScan({ user, onFinish, products }: SmartIn
       {/* New Product Modal */}
       {showNewProductForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-6">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white rounded-[40px] p-8 max-w-sm w-full space-y-6"
@@ -253,19 +245,19 @@ export default function SmartInventoryScan({ user, onFinish, products }: SmartIn
                 <label className="text-xs font-bold text-slate-400 mr-2 uppercase">الباركود</label>
                 <div className="bg-slate-100 p-3 rounded-xl font-mono text-sm text-slate-500">{showNewProductForm}</div>
               </div>
-              <Input 
-                label="سمية السلعة" 
-                placeholder="مثلا: كوكا كولا 1.5L" 
+              <Input
+                label="سمية السلعة"
+                placeholder="مثلا: كوكا كولا 1.5L"
                 value={newProductData.name}
-                onChange={e => setNewProductData({...newProductData, name: e.target.value})}
+                onChange={e => setNewProductData({ ...newProductData, name: e.target.value })}
                 required
               />
-              <Input 
-                label="ثمن البيع (DH)" 
+              <Input
+                label="ثمن البيع (DH)"
                 type="number"
-                placeholder="0.00" 
+                placeholder="0.00"
                 value={newProductData.price}
-                onChange={e => setNewProductData({...newProductData, price: e.target.value})}
+                onChange={e => setNewProductData({ ...newProductData, price: e.target.value })}
                 required
               />
               <Button type="submit" className="w-full">تأكيد</Button>
