@@ -7,7 +7,9 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/product.dart';
 import '../services/local_db_service.dart';
+import '../widgets/scanner_overlay.dart';
 import 'add_product_screen.dart';
+import 'package:uuid/uuid.dart';
 
 class POSScannerScreen extends StatefulWidget {
   const POSScannerScreen({super.key});
@@ -19,6 +21,7 @@ class POSScannerScreen extends StatefulWidget {
 class _POSScannerScreenState extends State<POSScannerScreen> {
   Map<String, Product> _productMap = {};
   final List<CartItem> _cart = [];
+  final List<RecentScan> _recentScans = [];
   bool _isLoading = true;
   bool _showSuccessFlash = false;
   final MobileScannerController _controller = MobileScannerController(
@@ -67,7 +70,7 @@ class _POSScannerScreenState extends State<POSScannerScreen> {
   void _handleBarcode(String code) {
     final product = _productMap[code];
     if (product != null) {
-      _triggerSuccess();
+      _triggerSuccess(product);
       _addToCart(product);
     } else {
       _triggerFailure();
@@ -75,9 +78,25 @@ class _POSScannerScreenState extends State<POSScannerScreen> {
     }
   }
 
-  void _triggerSuccess() {
+  void _triggerSuccess(Product product) {
     _successFeedback();
-    setState(() => _showSuccessFlash = true);
+    setState(() {
+      _showSuccessFlash = true;
+      final scan = RecentScan(product: product);
+      _recentScans.insert(0, scan);
+      // Limit to 2 recent scans for clarity
+      if (_recentScans.length > 2) _recentScans.removeLast();
+    });
+
+    // Remove toast after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _recentScans.removeWhere((s) => s.id == scan.id); 
+        });
+      }
+    });
+
     Future.delayed(const Duration(milliseconds: 150), () {
       if (mounted) setState(() => _showSuccessFlash = false);
     });
@@ -158,8 +177,8 @@ class _POSScannerScreenState extends State<POSScannerScreen> {
                     _loadProducts(); // Refresh map if product was added
                   }
                 },
-                icon: const Icon(Icons.add_shopping_cart),
-                label: const Text("Create New Product"),
+                icon: const Icon(Icons.add_shopping_cart, size: 20),
+                label: Text("زيد السلعة (Add Product)", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.emerald,
                   foregroundColor: Colors.white,
@@ -225,16 +244,52 @@ class _POSScannerScreenState extends State<POSScannerScreen> {
                     },
                   ),
                   ),
-                  // Switch Camera Button
+                  // Professional Scanner Overlay
+                  const ScannerOverlay(),
+                  
+                  // Recent Scans Floating Cards
+                  Positioned(
+                    top: 20,
+                    left: 20,
+                    right: 80, // Leave room for buttons
+                    child: Column(
+                      children: _recentScans.map((scan) => _RecentScanCard(scan: scan)).toList(),
+                    ),
+                  ),
+
+                  // TOP RIGHT CONTROLS
                   Positioned(
                     top: 16,
                     right: 16,
-                    child: CircleAvatar(
-                      backgroundColor: Colors.black.withOpacity(0.5),
-                      child: IconButton(
-                        icon: const Icon(Icons.flip_camera_ios, color: Colors.white),
-                        onPressed: () => _controller.switchCamera(),
-                      ),
+                    child: Column(
+                      children: [
+                        // Flash Button
+                        CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.35),
+                          child: IconButton(
+                            icon: ValueListenableBuilder(
+                              valueListenable: _controller.torchState,
+                              builder: (context, state, child) {
+                                return Icon(
+                                  state == TorchState.on ? Icons.flash_on : Icons.flash_off,
+                                  color: state == TorchState.on ? Colors.amber : Colors.white,
+                                  size: 20,
+                                );
+                              },
+                            ),
+                            onPressed: () => _controller.toggleTorch(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Switch Camera Button
+                        CircleAvatar(
+                          backgroundColor: Colors.black.withOpacity(0.35),
+                          child: IconButton(
+                            icon: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 20),
+                            onPressed: () => _controller.switchCamera(),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   // Animated Flash Indicator
@@ -371,4 +426,52 @@ class CartItem {
   int quantity;
 
   CartItem({required this.product, required this.quantity});
+}
+
+class RecentScan {
+  final String id = const Uuid().v4();
+  final Product product;
+  final DateTime timestamp = DateTime.now();
+
+  RecentScan({required this.product});
+}
+
+class _RecentScanCard extends StatelessWidget {
+  final RecentScan scan;
+  const _RecentScanCard({required this.scan});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: Colors.emerald.withOpacity(0.1), shape: BoxShape.circle),
+            child: const Icon(Icons.check, color: Colors.emerald, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(scan.product.name, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey[900])),
+                Text("${scan.product.price.toStringAsFixed(2)} MAD", style: GoogleFonts.poppins(fontSize: 11, color: Colors.emerald, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
